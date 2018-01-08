@@ -49,6 +49,11 @@ class NeuralNetwork:
 
         return self.final_outputs
 
+    def train(self, init_values, expected_output_values):
+
+        # Uses the query function to calculate the final outputs to start wih error calculation and weight updating
+        final_outputs = self.query(init_values)
+
 
 
 
