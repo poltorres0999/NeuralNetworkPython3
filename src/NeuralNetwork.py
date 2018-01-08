@@ -36,7 +36,14 @@ class NeuralNetwork:
         # Calculates the outputs of the first hidden layer
         first_hidden_inputs = np.dot(self.input_hidden_w, init_values)
         self.first_hidden_outputs = self.activation_function(first_hidden_inputs)
-
+        # Calculates the outputs for each hidden layer
+        for i in range(len(self.hidden_w)):
+            if i == 0:
+                self.hidden_outputs.append(np.dot(self.first_hidden_outputs, self.hidden_w[0]))
+            elif i == (len(self.hidden_w) - 1):
+                self.hidden_outputs.append(self.hidden_outputs[i-1], self.hidden_w[i])
+            self.hidden_outputs.append((self.hidden_outputs[i-1], self.hidden_w[i]))
+        # Calculates the final outputs using the last outputs of hidden layer
         final_inputs = np.dot(self.output_hidden_w, self.hidden_outputs[-1])
         self.final_outputs = self.activation_function(final_inputs)
 
