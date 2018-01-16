@@ -36,13 +36,16 @@ class NeuralNetwork:
         # Calculates the outputs of the first hidden layer
         first_hidden_inputs = np.dot(self.input_hidden_w, init_values)
         self.first_hidden_outputs = self.activation_function(first_hidden_inputs)
+
         # Calculates the outputs for each hidden layer
         for i in range(len(self.hidden_w)):
             if i == 0:
-                self.hidden_outputs.append(np.dot(self.first_hidden_outputs, self.hidden_w[0]))
-            elif i == (len(self.hidden_w) - 1):
-                self.hidden_outputs.append(self.hidden_outputs[i-1], self.hidden_w[i])
-            self.hidden_outputs.append((self.hidden_outputs[i-1], self.hidden_w[i]))
+                self.hidden_outputs.append(self.activation_function(
+                    np.dot(self.first_hidden_outputs, self.hidden_w[i])))
+            else:
+                self.hidden_outputs.append(self.activation_function(
+                    (self.hidden_outputs[i-1], self.hidden_w[i])))
+
         # Calculates the final outputs using the last outputs of hidden layer
         final_inputs = np.dot(self.output_hidden_w, self.hidden_outputs[-1])
         self.final_outputs = self.activation_function(final_inputs)
@@ -51,8 +54,41 @@ class NeuralNetwork:
 
     def train(self, init_values, expected_output_values):
 
+        # Convert the input values and the expected outputs in 2d arrays
+        init_values = np.array(init_values, ndmin=2).T
+        expected_output_values = np.array(expected_output_values, ndmin=2).T
+
         # Uses the query function to calculate the final outputs to start wih error calculation and weight updating
         final_outputs = self.query(init_values)
+
+        # Calculates the Output errors
+        output_errors = expected_output_values - final_outputs
+
+        # Actualizes the last weight matrix
+        self.output_hidden_w += self.learning_rate * np.dot((output_errors * final_outputs * (1-0 * final_outputs)),
+                                                            np.transpose(self.hidden_outputs[-1]))
+        # Actualizes the hidden matrix weights
+        current_error = 0
+        for i in range(len(self.hidden_outputs), -1, -1):
+            if i == len(self.hidden_outputs):
+                current_error = np.dot(self.output_hidden_w.T, output_errors)
+                self.hidden_w[i] += self.learning_rate * np.dot((current_error * self.hidden_outputs[i] *
+                                                (1-0 * self.hidden_outputs[i])), np.transpose(self.hidden_outputs[i-1]))
+            elif i == 0:
+                self.hidden_w[i] += self.learning_rate * np.dot((current_error * self.hidden_outputs[i] *
+                                             (1 - 0 * self.hidden_outputs[i])), np.transpose(self.first_hidden_outputs))
+            else:
+                current_error = np.dot(self.hidden_w[i].T, current_error)
+                self.hidden_w[i] += self.learning_rate * np.dot((current_error * self.hidden_outputs[i] *
+                                                (1-0 * self.hidden_outputs[i])), np.transpose(self.hidden_outputs[i-1]))
+
+        # Actualizes the input_hidden matrix weight
+        current_error = np.dot(self.input_hidden_w.T, current_error)
+        self.input_hidden_w += self.learning_rate * np.dot((current_error * self.first_hidden_outputs *
+                                                         (1 - 0 * self.first_hidden_outputs)),np.transpose(init_values))
+
+
+
 
 
 
